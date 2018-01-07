@@ -9,6 +9,8 @@ import okhttp3.OkHttpClient;
 import org.marre.mandelbrot.Complex;
 import org.marre.mandelbrot.Dimension;
 import org.marre.mandelbrot.MandelbrotPart;
+import retrofit2.HttpException;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -60,6 +62,12 @@ public final class MandelbrotClient {
         int maxSteps = mandelbrotPart.getMaxSteps();
 
         return mandelbrotApi.mandelbrot(minc.getRe(), minc.getIm(), maxc.getRe(), maxc.getIm(), size.getWidth(), size.getWidth(), maxSteps)
+                .map(response -> {
+                    if (response.isSuccessful()) {
+                        return response.body();
+                    }
+                    throw new HttpException(response);
+                })
                 .map(response -> new MandelbrotResult(mandelbrotPart, response.getPixels()));
     }
 
@@ -68,7 +76,7 @@ public final class MandelbrotClient {
      */
     interface MandelbrotApi {
         @GET("mandelbrot/{mincre}/{mincim}/{maxcre}/{maxcim}/{xres}/{yres}/{infn}")
-        Single<MandelbrotResponseJson> mandelbrot(
+        Single<Response<MandelbrotResponseJson>> mandelbrot(
                 @Path("mincre") double mincre,
                 @Path("mincim") double mincim,
                 @Path("maxcre") double maxcre,
