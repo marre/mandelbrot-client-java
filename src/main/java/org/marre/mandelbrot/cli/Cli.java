@@ -19,8 +19,6 @@ public final class Cli {
     private static final Logger LOG = LoggerFactory.getLogger(Cli.class);
 
     public static void main(String ... args) {
-        LOG.info("Starting");
-
         CliOptions params = parseArguments(args);
 
         // Split into parts
@@ -36,12 +34,9 @@ public final class Cli {
 
         // BUG: After splitting, the canvas size is a multiple of params.getDivisions()
         //      so we have to recalculate the canvas size
-        int partWidth = params.getWidth() / partSize;
-        int canvasWidth = partWidth * partSize;
-        int partHeight = params.getHeight() / partSize;
-        int canvasHeight = partHeight * partSize;
+        Dimension canvasSize = mandelbrotParts.get(0).getCanvasSize();
 
-        BufferedImage canvas = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage canvas = new BufferedImage(canvasSize.getWidth(), canvasSize.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
         UnicastSubject<MandelbrotResult> mandelbrotResults = UnicastSubject.create();
 

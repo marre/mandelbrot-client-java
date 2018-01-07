@@ -54,6 +54,24 @@ public class TestMandelbrotPart {
         Assert.assertEquals(part(2000, 2000, 1000, 1000, 1000, 1000, 0, 0, 2, 2), parts.get(3));
     }
 
+    // BUG: This is actually a bug, it should be resized to 9 parts
+    @Test
+    public void testSplitTo4Resized() {
+        MandelbrotPart mandelbrotPart = MandelbrotPart.create(
+                new Dimension(2000, 2000),
+                new Complex(-2, -2),
+                new Complex(2, 2),
+                100);
+
+        List<MandelbrotPart> parts = mandelbrotPart.split(800);
+        Assert.assertEquals(4, parts.size());
+
+        Assert.assertEquals(part(1600, 1600, 0, 0, 800, 800, -2, -2, 0, 0), parts.get(0));
+        Assert.assertEquals(part(1600, 1600, 800, 0, 800, 800, 0, -2, 2, 0), parts.get(1));
+        Assert.assertEquals(part(1600, 1600, 0, 800, 800, 800, -2, 0, 0, 2), parts.get(2));
+        Assert.assertEquals(part(1600, 1600, 800, 800, 800, 800, 0, 0, 2, 2), parts.get(3));
+    }
+
     @Test
     public void testSplitTo4Wide() {
         MandelbrotPart mandelbrotPart = MandelbrotPart.create(

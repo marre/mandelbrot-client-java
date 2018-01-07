@@ -93,23 +93,25 @@ public class MandelbrotPart {
         }
 
         int partWidth = size.getWidth() / partSize;
-        int width = partWidth * partSize;
+        int newCanvasWidth = partWidth * partSize;
         double sizeRe = maxc.getRe() - minc.getRe();
-        double pixelSizeRe = sizeRe / width;
+        double pixelSizeRe = sizeRe / newCanvasWidth;
 
         int partHeight = size.getHeight() / partSize;
-        int height = partHeight * partSize;
+        int newCanvasHeight = partHeight * partSize;
         double sizeIm = maxc.getIm() - minc.getIm();
-        double pixelSizeIm = sizeIm / height;
+        double pixelSizeIm = sizeIm / newCanvasHeight;
 
-        for (int y=0; y < height; y = y + partSize) {
-            for (int x=0; x < width; x = x + partSize) {
+        Dimension newCanvasSize = new Dimension(newCanvasWidth, newCanvasHeight);
+
+        for (int y=0; y < newCanvasHeight; y = y + partSize) {
+            for (int x=0; x < newCanvasWidth; x = x + partSize) {
                 MandelbrotPart part = new MandelbrotPart(
                         new Dimension(partSize, partSize),
                         new Complex(minc.getRe() + x * pixelSizeRe, minc.getIm() + y * pixelSizeIm),
                         new Complex(minc.getRe() + (x + partSize) * pixelSizeRe, minc.getIm() + (y + partSize) * pixelSizeIm),
                         maxSteps,
-                        canvasSize,
+                        newCanvasSize,
                         new Position(x, y));
                 mandelbrotParts.add(part);
             }
