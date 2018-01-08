@@ -19,7 +19,7 @@ public class TestMandelbrotPart {
         Assert.assertEquals(1, parts.size());
         Assert.assertEquals(mandelbrotPart, parts.get(0));
 
-        Assert.assertEquals(part(1000, 1000, 0, 0, 1000, 1000, -2, -2, 2, 2), parts.get(0));
+        Assert.assertEquals(part(0, 0, 1000, 1000, -2, -2, 2, 2), parts.get(0));
     }
 
     @Test
@@ -33,8 +33,8 @@ public class TestMandelbrotPart {
         List<MandelbrotPart> parts = mandelbrotPart.split(1000);
         Assert.assertEquals(2, parts.size());
 
-        Assert.assertEquals(part(1000, 2000, 0, 0, 1000, 1000, -2, -2, 2, 0), parts.get(0));
-        Assert.assertEquals(part(1000, 2000, 0, 1000, 1000, 1000, -2, 0, 2, 2), parts.get(1));
+        Assert.assertEquals(part(0, 0, 1000, 1000, -2, -2, 2, 0), parts.get(0));
+        Assert.assertEquals(part(0, 1000, 1000, 1000, -2, 0, 2, 2), parts.get(1));
     }
 
     @Test
@@ -48,28 +48,34 @@ public class TestMandelbrotPart {
         List<MandelbrotPart> parts = mandelbrotPart.split(1000);
         Assert.assertEquals(4, parts.size());
 
-        Assert.assertEquals(part(2000, 2000, 0, 0, 1000, 1000, -2, -2, 0, 0), parts.get(0));
-        Assert.assertEquals(part(2000, 2000, 1000, 0, 1000, 1000, 0, -2, 2, 0), parts.get(1));
-        Assert.assertEquals(part(2000, 2000, 0, 1000, 1000, 1000, -2, 0, 0, 2), parts.get(2));
-        Assert.assertEquals(part(2000, 2000, 1000, 1000, 1000, 1000, 0, 0, 2, 2), parts.get(3));
+        Assert.assertEquals(part(0, 0, 1000, 1000, -2, -2, 0, 0), parts.get(0));
+        Assert.assertEquals(part(1000, 0, 1000, 1000, 0, -2, 2, 0), parts.get(1));
+        Assert.assertEquals(part(0, 1000, 1000, 1000, -2, 0, 0, 2), parts.get(2));
+        Assert.assertEquals(part(1000, 1000, 1000, 1000, 0, 0, 2, 2), parts.get(3));
     }
 
-    // BUG: This is actually a bug, it should be resized to 9 parts
     @Test
     public void testSplitTo4Resized() {
         MandelbrotPart mandelbrotPart = MandelbrotPart.create(
-                new Dimension(2000, 2000),
+                new Dimension(600, 600),
                 new Complex(-2, -2),
                 new Complex(2, 2),
                 100);
 
-        List<MandelbrotPart> parts = mandelbrotPart.split(800);
+        List<MandelbrotPart> parts = mandelbrotPart.split(400);
         Assert.assertEquals(4, parts.size());
+    }
 
-        Assert.assertEquals(part(1600, 1600, 0, 0, 800, 800, -2, -2, 0, 0), parts.get(0));
-        Assert.assertEquals(part(1600, 1600, 800, 0, 800, 800, 0, -2, 2, 0), parts.get(1));
-        Assert.assertEquals(part(1600, 1600, 0, 800, 800, 800, -2, 0, 0, 2), parts.get(2));
-        Assert.assertEquals(part(1600, 1600, 800, 800, 800, 800, 0, 0, 2, 2), parts.get(3));
+    @Test
+    public void testSplitTo9Resized() {
+        MandelbrotPart mandelbrotPart = MandelbrotPart.create(
+                new Dimension(1000, 1000),
+                new Complex(-2, -2),
+                new Complex(2, 2),
+                100);
+
+        List<MandelbrotPart> parts = mandelbrotPart.split(400);
+        Assert.assertEquals(9, parts.size());
     }
 
     @Test
@@ -83,19 +89,26 @@ public class TestMandelbrotPart {
         List<MandelbrotPart> parts = mandelbrotPart.split(1000);
         Assert.assertEquals(4, parts.size());
 
-        Assert.assertEquals(part(4000, 1000, 0, 0, 1000, 1000, -2, -2, -1, 2), parts.get(0));
-        Assert.assertEquals(part(4000, 1000, 1000, 0, 1000, 1000, -1, -2, 0, 2), parts.get(1));
-        Assert.assertEquals(part(4000, 1000, 2000, 0, 1000, 1000, 0, -2, 1, 2), parts.get(2));
-        Assert.assertEquals(part(4000, 1000, 3000, 0, 1000, 1000, 1, -2, 2, 2), parts.get(3));
+        Assert.assertEquals(part(0, 0, 1000, 1000, -2, -2, -1, 2), parts.get(0));
+        Assert.assertEquals(part(1000, 0, 1000, 1000, -1, -2, 0, 2), parts.get(1));
+        Assert.assertEquals(part(2000, 0, 1000, 1000, 0, -2, 1, 2), parts.get(2));
+        Assert.assertEquals(part(3000, 0, 1000, 1000, 1, -2, 2, 2), parts.get(3));
     }
 
-    private static MandelbrotPart part(int canvasWidth, int canvasHeight, int x, int y, int width, int height, int mincre, int mincim, int maxcre, int maxcim) {
+    private static MandelbrotPart part(
+            int x,
+            int y,
+            int width,
+            int height,
+            double mincre,
+            double mincim,
+            double maxcre,
+            double maxcim) {
         return new MandelbrotPart(
                 new Dimension(width, height),
                 new Complex(mincre, mincim),
                 new Complex(maxcre, maxcim),
                 100,
-                new Dimension(canvasWidth, canvasHeight),
                 new Position(x, y));
     }
 }

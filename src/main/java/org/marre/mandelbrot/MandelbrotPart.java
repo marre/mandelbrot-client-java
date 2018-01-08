@@ -34,11 +34,6 @@ public class MandelbrotPart {
     private final int maxSteps;
 
     /**
-     * Size of the canvas where this part will be painted.
-     */
-    private final Dimension canvasSize;
-
-    /**
      * Offset in a possible larger canvas where the result should be drawn.
      */
     private final Position offset;
@@ -70,7 +65,6 @@ public class MandelbrotPart {
                 minc,
                 maxc,
                 maxSteps,
-                size,
                 new Position(0, 0));
     }
 
@@ -92,31 +86,50 @@ public class MandelbrotPart {
             return mandelbrotParts;
         }
 
-        int partWidth = size.getWidth() / partSize;
-        int newCanvasWidth = partWidth * partSize;
         double sizeRe = maxc.getRe() - minc.getRe();
-        double pixelSizeRe = sizeRe / newCanvasWidth;
-
-        int partHeight = size.getHeight() / partSize;
-        int newCanvasHeight = partHeight * partSize;
+        double pixelSizeRe = sizeRe / size.getWidth();
         double sizeIm = maxc.getIm() - minc.getIm();
-        double pixelSizeIm = sizeIm / newCanvasHeight;
+        double pixelSizeIm = sizeIm / size.getHeight();
 
-        Dimension newCanvasSize = new Dimension(newCanvasWidth, newCanvasHeight);
+        int tilesX = size.getWidth() / partSize;
+        int newCanvasWidth = tilesX * partSize;
+        int tilesY = size.getHeight() / partSize;
+        int newCanvasHeight = tilesY * partSize;
 
         for (int y=0; y < newCanvasHeight; y = y + partSize) {
             for (int x=0; x < newCanvasWidth; x = x + partSize) {
-                MandelbrotPart part = new MandelbrotPart(
-                        new Dimension(partSize, partSize),
-                        new Complex(minc.getRe() + x * pixelSizeRe, minc.getIm() + y * pixelSizeIm),
-                        new Complex(minc.getRe() + (x + partSize) * pixelSizeRe, minc.getIm() + (y + partSize) * pixelSizeIm),
-                        maxSteps,
-                        newCanvasSize,
-                        new Position(x, y));
-                mandelbrotParts.add(part);
+                mandelbrotParts.add(getMandelbrotPart(x, y, partSize, partSize, pixelSizeRe, pixelSizeIm));
             }
         }
 
+        int xRest = size.getWidth() % partSize;
+        int yRest = size.getHeight() % partSize;
+
+        if (xRest > 0) {
+            for (int y=0; y < newCanvasHeight; y = y + partSize) {
+                mandelbrotParts.add(getMandelbrotPart(newCanvasWidth, y, xRest, partSize, pixelSizeRe, pixelSizeIm));
+            }
+        }
+
+        if (yRest > 0) {
+            for (int x=0; x < newCanvasWidth; x = x + partSize) {
+                mandelbrotParts.add(getMandelbrotPart(x, newCanvasHeight, partSize, yRest, pixelSizeRe, pixelSizeIm));
+            }
+        }
+
+        if ((xRest > 0) && (yRest > 0)) {
+            mandelbrotParts.add(getMandelbrotPart(newCanvasWidth, newCanvasHeight, xRest, yRest, pixelSizeRe, pixelSizeIm));
+        }
+
         return mandelbrotParts;
+    }
+
+    private MandelbrotPart getMandelbrotPart(int x, int y, int width, int height, double rePixelSize, double imPixelSize) {
+        return new MandelbrotPart(
+                            new Dimension(width, height),
+                            new Complex(minc.getRe() + x * rePixelSize, minc.getIm() + y * imPixelSize),
+                            new Complex(minc.getRe() + (x + width) * rePixelSize, minc.getIm() + (y + height) * imPixelSize),
+                            maxSteps,
+                            new Position(x, y));
     }
 }

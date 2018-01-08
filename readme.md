@@ -15,7 +15,7 @@ Dependencies:
 
 ✗ java -jar target/mandelbrot-client-java-0.0.1-SNAPSHOT.jar
 Missing required parameters: min_c_re, min_c_im, max_c_re, max_c_im, x, y
-Usage: <main class> [-d=<divisions>] [-p=<parallel>] [-s=<steps>] [-u=<url>]
+Usage: <main class> [-c=<concurrent>] [-d=<divisions>] [-s=<steps>] [-u=<url>]
                     min_c_re min_c_im max_c_re max_c_im x y
 Mandelbrot client
       min_c_re                min_c_re [-2.0 ... 2.0]
@@ -24,16 +24,15 @@ Mandelbrot client
       max_c_im                max_c_im [-2.0 ... 2.0]
       x                       canvas width in pixels [>0]
       y                       canvas height in pixels [>0]
-  -d= <divisions>             the size of each sub part [>0]
+  -c= <concurrent>            the number of concurrent requests [>0]
+                                Default: 10
+  -d= <divisions>             the size of each sub part [>100]
                                 Default: 1000
-  -p= <parallel>              the number of parallel requests [>0]
-                                Default: 1
   -s= <steps>                 max steps per pixel [>0]
                                 Default: 1024
   -u= <url>                   the mandelbrot server url
                                 Default: https://qfvdee5mse.execute-api.
                                 us-east-1.amazonaws.com/dev/
-
 [...]
 
 ✗ $ java -jar target/mandelbrot-client-java-0.0.1-SNAPSHOT.jar -d 500 -- -1.0 0 1.0 1.0 1000 500 > mandelbrot.png
@@ -46,13 +45,6 @@ Mandelbrot client
 
 # TODO
 
-* Allow any size for division. Right now division controls the resulting 
-  canvas size.
-* Actually get the parallelism working:
-    * The retrofit client seems to send them in parallel, but the server 
-      processes them sequentially.
-    * Also limit the concurrency. Right now it sends a request for all parts
-      at once.
 * Better handling of 'HTTP 502 Bad Gateway' errors
   * Most likely caused by a too large result. A lambda body can only be 
     6Mb large. A workaround is to save it to s3 and redirect to that resource.

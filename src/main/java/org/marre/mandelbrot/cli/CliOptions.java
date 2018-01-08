@@ -14,7 +14,7 @@ final class CliOptions {
     private URI url = URI.create("https://qfvdee5mse.execute-api.us-east-1.amazonaws.com/dev/");
 
     @CommandLine.Option(names = "-c", description = "the number of concurrent requests [>0]")
-    private int concurrent = 1;
+    private int concurrent = 10;
 
     @CommandLine.Option(names = "-d", description = "the size of each sub part [>100]")
     private int divisions = 1000;

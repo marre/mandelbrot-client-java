@@ -17,26 +17,30 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
 
+import java.util.concurrent.TimeUnit;
+
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public final class MandelbrotClient {
-    // MAX simultaneous requests
-    private static final int MAX_REQUESTS = 200;
-
     @NonNull
     private final MandelbrotApi mandelbrotApi;
 
-    public static MandelbrotClient create(String mandelbrotServerBaseUrl) {
+    public static MandelbrotClient create(String mandelbrotServerBaseUrl, int maxConcurrency) {
+        if (maxConcurrency < 1) {
+            throw new IllegalArgumentException("maxConcurrency must be a positive integer. [" + maxConcurrency + "]");
+        }
+
         // Retrofit complains if the base URI doesn't end with '/'
         if (!mandelbrotServerBaseUrl.endsWith("/")) {
             mandelbrotServerBaseUrl += "/";
         }
 
         Dispatcher dispatcher = new Dispatcher();
-        dispatcher.setMaxRequests(MAX_REQUESTS);
-        dispatcher.setMaxRequestsPerHost(MAX_REQUESTS);
+        dispatcher.setMaxRequests(maxConcurrency);
+        dispatcher.setMaxRequestsPerHost(maxConcurrency);
 
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
+                .readTimeout(45, TimeUnit.SECONDS)
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -61,7 +65,7 @@ public final class MandelbrotClient {
         Complex maxc = mandelbrotPart.getMaxc();
         int maxSteps = mandelbrotPart.getMaxSteps();
 
-        return mandelbrotApi.mandelbrot(minc.getRe(), minc.getIm(), maxc.getRe(), maxc.getIm(), size.getWidth(), size.getWidth(), maxSteps)
+        return mandelbrotApi.mandelbrot(minc.getRe(), minc.getIm(), maxc.getRe(), maxc.getIm(), size.getWidth(), size.getHeight(), maxSteps)
                 .map(response -> {
                     if (response.isSuccessful()) {
                         return response.body();

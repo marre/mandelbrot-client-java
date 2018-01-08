@@ -21,20 +21,20 @@ public final class Cli {
     public static void main(String ... args) {
         CliOptions params = parseArguments(args);
 
-        // Split into parts
+        long start = System.currentTimeMillis();
 
+        Dimension canvasSize = new Dimension(params.getWidth(), params.getHeight());
         MandelbrotPart mandelbrotPartComplete = MandelbrotPart.create(
-                new Dimension(params.getWidth(), params.getHeight()),
+                canvasSize,
                 new Complex(params.getMincre(), params.getMincim()),
                 new Complex(params.getMaxcre(), params.getMaxcim()),
                 params.getSteps());
-
         int partSize = Math.max(1, params.getDivisions());
-        List<MandelbrotPart> mandelbrotParts = mandelbrotPartComplete.split(partSize);
+        int maxConcurrency = Math.max(1, params.getConcurrent());
+        String mandelbrotServerBaseUrl = params.getUrl().toASCIIString();
 
-        // BUG: After splitting, the canvas size is a multiple of params.getDivisions()
-        //      so we have to recalculate the canvas size
-        Dimension canvasSize = mandelbrotParts.get(0).getCanvasSize();
+        // Split into parts
+        List<MandelbrotPart> mandelbrotParts = mandelbrotPartComplete.split(partSize);
 
         BufferedImage canvas = new BufferedImage(canvasSize.getWidth(), canvasSize.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
@@ -45,22 +45,30 @@ public final class Cli {
                 .observeOn(Schedulers.single())
                 .subscribe(
                         response -> {
+                            // A new response has been received. Add pixels to the canvas
                             MandelbrotPart part = response.getMandelbrotPart();
-                            LOG.info("Received : {}", part.getOffset());
 
-                            mandelbrotParts.remove(part);
-
-                            // A new response has been received. Add pixel to the canvas
-
-                            int[] pixelIterations = response.getPixels();
-                            Dimension dimension = part.getSize();
+                            Dimension size = part.getSize();
                             Position offset = part.getOffset();
 
+                            int[] pixelIterations = response.getPixels();
                             int[] packedRgbPixels = colourize(pixelIterations);
 
-                            canvas.setRGB(offset.getX(), offset.getY(), dimension.getWidth(), dimension.getHeight(), packedRgbPixels, 0, dimension.getWidth());
+                            // Remove the part from the mandelbrotParts list
+                            mandelbrotParts.remove(part);
 
-                            // Signal that we are done
+                            LOG.info("Received : {} {} {} pixels, {} parts left", offset, size, packedRgbPixels.length, mandelbrotParts.size());
+
+                            canvas.setRGB(
+                                    offset.getX(),
+                                    offset.getY(),
+                                    size.getWidth(),
+                                    size.getHeight(),
+                                    packedRgbPixels,
+                                    0,
+                                    size.getWidth());
+
+                            // Is this the final part?
                             if (mandelbrotParts.isEmpty()) {
                                 mandelbrotResults.onComplete();
                             }
@@ -75,24 +83,18 @@ public final class Cli {
                             PngUtil.toPng(canvas, System.out);
                             System.out.flush();
 
-                            LOG.info("Done!");
+                            long duration = System.currentTimeMillis() - start;
+
+                            LOG.info("Done in {} ms!", duration);
 
                             System.exit(0);
                         });
 
-        String mandelbrotServerBaseUrl = params.getUrl().toASCIIString();
-        MandelbrotClient mandelbrotClient = MandelbrotClient.create(mandelbrotServerBaseUrl);
+        MandelbrotClient mandelbrotClient = MandelbrotClient.create(mandelbrotServerBaseUrl, maxConcurrency);
 
-        int concurrentRequests = 1;
-        if (mandelbrotParts.size() > 1) {
-            // Need more than one part
-            concurrentRequests = params.getConcurrent();
-        }
-
-        // TODO: Limit parallelism to params.getParallel()
-        //       Right now we just send all requests at once
+        // Just send all requests to retrofit and let it send it as efficient as possible
         for (MandelbrotPart part : mandelbrotParts) {
-            LOG.info("Sending : {}", part);
+            LOG.info("Enqueing request for: {}", part);
             mandelbrotClient.mandelbrot(part)
                     .toObservable()
                     .subscribe(mandelbrotResults::onNext, mandelbrotResults::onError);
